@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manufacturing Data Harmonization — POC Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--navy:#0f1b33;--navy2:#16243f;--ink:#1b2333;--muted:#5d6b82;--line:#e3e8f0;--bg:#f4f6fa;--card:#fff;
+--purple:#7c3aed;--blue:#2563eb;--teal:#0e8aa8;--red:#dc2626;--green:#15803d;--amber:#d97706;--accent:#e31837;
+--ok-bg:#e8f6ee;--warn-bg:#fff4e0;--bad-bg:#fdecec}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:13px;line-height:1.45}
+button,select,input{font-family:inherit;font-size:13px;color:var(--ink)}
+input,select{background:#fff;color:var(--ink)}
+input::placeholder{color:#8a96aa}
+button{cursor:pointer}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:11.5px}
+/* top bar */
+.top{position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:10px 18px;flex-wrap:wrap}
+.top .t1{font-weight:700;font-size:15px}.top .t2{font-size:11px;color:#9fb0cc}
+.top .ctrl{margin-left:auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.clock{background:#ffffff12;border:1px solid #ffffff22;border-radius:8px;padding:5px 10px;text-align:right}
+.clock b{font-size:14px;font-variant-numeric:tabular-nums}.clock span{display:block;font-size:10px;color:#9fb0cc}
+.tb{background:#ffffff14;border:1px solid #ffffff2a;color:#fff;border-radius:8px;padding:7px 11px;font-weight:600}
+.tb:hover{background:#ffffff26}
+.tb.red{background:var(--accent);border-color:var(--accent)}.tb.red:hover{background:#c3122d}
+.seg{display:inline-flex;background:#ffffff12;border-radius:8px;padding:2px;border:1px solid #ffffff22}
+.seg button{background:transparent;border:0;color:#b9c6dd;padding:5px 9px;border-radius:6px;font-weight:600;font-size:12px}
+.seg button.on{background:#fff;color:var(--navy)}
+.livedot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#22c55e;margin-right:6px;box-shadow:0 0 0 0 #22c55e88;animation:pulse 1.6s infinite}
+.paused .livedot{background:#f59e0b;animation:none}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #22c55e88}70%{box-shadow:0 0 0 7px #22c55e00}100%{box-shadow:0 0 0 0 #22c55e00}}
+/* layout */
+.wrap{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 56px)}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}.side{display:flex;overflow-x:auto}}
+.side{background:var(--navy2);padding:12px 8px}
+.side a{display:flex;align-items:center;gap:9px;color:#b9c6dd;text-decoration:none;padding:10px 12px;border-radius:8px;font-weight:500;margin-bottom:2px;white-space:nowrap}
+.side a:hover{background:#ffffff10}
+.side a.on{background:#ffffff1a;color:#fff}
+.side a .ic{width:22px;height:22px;border-radius:6px;background:#ffffff14;display:grid;place-items:center;font-size:12px}
+.side a.on .ic{background:var(--accent)}
+.side .badge{margin-left:auto;background:var(--accent);color:#fff;border-radius:10px;font-size:10px;padding:1px 7px;font-weight:700}
+.side .foot{color:#7f8fab;font-size:10.5px;padding:14px 12px;line-height:1.5}
+main{padding:18px 22px 40px;min-width:0}
+section{display:none}section.on{display:block}
+h2{font-size:19px;margin:0 0 2px}
+.lead{color:var(--muted);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:repeat(3,1fr)}.g5{grid-template-columns:repeat(5,1fr)}.g6{grid-template-columns:repeat(6,1fr)}
+@media(max-width:1100px){.g5,.g6{grid-template-columns:repeat(3,1fr)}.g2,.g3{grid-template-columns:1fr}}
+.k{font-size:10.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);font-weight:600}
+.v{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.v small{font-size:12px;color:var(--muted);font-weight:500}
+.tag{display:inline-block;font-size:10.5px;font-weight:600;padding:2px 8px;border-radius:10px;background:#eef2f8;color:#334155;white-space:nowrap}
+.tag.ok{background:var(--ok-bg);color:var(--green)}.tag.warn{background:var(--warn-bg);color:var(--amber)}.tag.bad{background:var(--bad-bg);color:var(--red)}.tag.run{background:#e6f0ff;color:var(--blue)}
+.btn{background:var(--navy);color:#fff;border:0;border-radius:8px;padding:8px 13px;font-weight:600}
+.btn:hover{background:#22355c}.btn.ghost{background:#fff;color:var(--navy);border:1px solid var(--line)}.btn.red{background:var(--accent)}
+.bar{height:6px;background:#eef2f8;border-radius:4px;overflow:hidden}.bar div{height:100%;background:var(--blue);transition:width .25s}
+table{border-collapse:collapse;width:100%}
+#registry td.mono{white-space:nowrap}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}
+th{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:600;background:#fafbfd}
+tr.click{cursor:pointer}tr.click:hover td{background:#f6f9ff}tr.sel td{background:#eef4ff}
+/* live */
+.line{display:grid;grid-template-columns:1fr 24px 1fr 24px 1fr;align-items:stretch;gap:6px}
+@media(max-width:1100px){.line{grid-template-columns:1fr}.line .arr{display:none}}
+.arr{display:grid;place-items:center;color:#a9b5c9;font-size:18px}
+.unit{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;transition:.2s;position:relative}
+.unit.act{border-color:var(--blue);box-shadow:0 0 0 3px #2563eb1a}
+.unit.alm{border-color:var(--red);box-shadow:0 0 0 3px #dc26261f;animation:blink 1s infinite}
+@keyframes blink{50%{box-shadow:0 0 0 6px #dc262610}}
+.unit h4{margin:0;font-size:14px}.unit .sub{color:var(--muted);font-size:11px}
+.unit .vals{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.unit .vals div{background:#f7f9fc;border-radius:7px;padding:6px 8px}
+.unit .vals b{display:block;font-size:15px;font-variant-numeric:tabular-nums}
+.unit .vals span{font-size:10px;color:var(--muted)}
+.unit .ctx{margin-top:8px;font-size:11px;color:var(--muted)}
+.unit .ctx b{color:var(--ink)}
+.feed{max-height:330px;overflow:auto}
+.ev{display:flex;gap:8px;padding:6px 0;border-bottom:1px dashed #edf0f5;font-size:12px;align-items:flex-start}
+.ev .tm{color:var(--muted);font-variant-numeric:tabular-nums;min-width:38px}
+/* pipeline */
+.src{display:inline-block;font-size:10px;font-weight:700;color:#fff;border-radius:4px;padding:1px 6px;min-width:56px;text-align:center}
+.s-EBS{background:var(--purple)}.s-MES{background:var(--blue)}.s-PI{background:var(--teal)}.s-IGN{background:var(--red)}
+.msg{padding:6px 0;border-bottom:1px dashed #edf0f5}.msg.new{animation:in .6s ease}
+@keyframes in{from{background:#fff7d6}to{background:transparent}}
+.msg .mono{word-break:break-all;color:#334155}
+.note{font-size:11px;color:var(--muted)}
+.chip{display:inline-block;font-size:10px;background:#e8f6ee;color:var(--green);border-radius:4px;padding:1px 5px;margin:2px 3px 0 0;font-weight:600}
+.chip.q{background:var(--bad-bg);color:var(--red)}
+.flowcol{display:grid;grid-template-columns:1fr 150px 1fr;gap:12px}
+@media(max-width:1100px){.flowcol{grid-template-columns:1fr}}
+.engine{background:var(--navy);color:#fff;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;justify-content:center}
+.engine .st{background:#ffffff12;border-radius:7px;padding:7px 9px;font-size:11.5px;font-weight:600}
+.engine .st span{display:block;font-weight:400;color:#9fb0cc;font-size:10.5px}
+.engine .st.flash{background:#e3183755}
+.qbox{border:1px solid #f3c2c2;background:#fff8f8;border-radius:10px;padding:10px;margin-bottom:8px}
+input[type=text],select{border:1px solid var(--line);border-radius:7px;padding:7px 9px;background:#fff}
+/* batches */
+.bx{display:grid;grid-template-columns:360px 1fr;gap:12px}
+@media(max-width:1100px){.bx{grid-template-columns:1fr}}
+.gene{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11.5px}
+.gene .n{border:1px solid var(--line);border-radius:7px;padding:5px 8px;background:#fff}
+.gene .n small{display:block;color:var(--muted);font-size:10px}
+.gene .n.b{background:var(--navy);color:#fff;border-color:var(--navy)}.gene .n.b small{color:#9fb0cc}
+.gene .n.c{background:#f5f1ff;border-color:#d8ccfb}
+/* analytics */
+.ask{display:flex;gap:8px}.ask input{flex:1;font-size:14px;padding:10px 12px}
+.pre{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.pre button{color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:16px;padding:5px 11px;font-size:12px}
+.pre button:hover{border-color:#b9c7de}
+.sql{background:var(--navy);color:#cfe0ff;border-radius:8px;padding:10px 12px;white-space:pre-wrap}
+.insight{background:#fff8e6;border:1px solid #f3dca5;border-radius:8px;padding:9px 11px;margin-top:10px}
+svg text{font-family:Inter,sans-serif}
+.tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 8px;border-radius:6px;display:none;z-index:50}
+#toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:60}
+.toast{background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;font-size:12.5px;box-shadow:0 8px 24px #0004;max-width:360px;border-left:4px solid var(--blue);animation:tin .3s ease}
+.toast.bad{border-left-color:var(--red)}.toast.ok{border-left-color:#22c55e}.toast.warn{border-left-color:#f59e0b}
+@keyframes tin{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<div class="top" id="top">
+  <div><div class="t1">Manufacturing Data Hub · POC</div><div class="t2">Line L2 · Site BOS-1 · simulated plant, illustrative data</div></div>
+  <div class="ctrl">
+    <div class="clock"><b id="clkL">--:--</b> <span id="clkU">UTC</span></div>
+    <span style="font-size:12px;color:#cbd6ea"><span class="livedot"></span><span id="liveTxt">LIVE</span></span>
+    <button class="tb" id="playBtn">⏸ Pause</button>
+    <div class="seg" id="speed"><button data-s="1">1×</button><button data-s="5" class="on">5×</button><button data-s="20">20×</button></div>
+    <button class="tb red" id="faultBtn">⚡ Inject dryer fault</button>
+    <button class="tb" id="resetBtn">↺ Reset</button>
+  </div>
+</div>
+<div class="wrap">
+  <nav class="side" id="side">
+    <a href="#live" data-v="live"><span class="ic">◉</span>Live line</a>
+    <a href="#pipeline" data-v="pipeline"><span class="ic">⇶</span>Data pipeline <span class="badge" id="qBadge" style="display:none">0</span></a>
+    <a href="#batches" data-v="batches"><span class="ic">▤</span>Batch explorer</a>
+    <a href="#analytics" data-v="analytics"><span class="ic">∑</span>Ask the data</a>
+    <div class="foot">Simulated plant feeding the harmonization layer in real time: Oracle EBS · POMS MES · PI Historian · Ignition SCADA.<br><br>All IDs and values are made up for demonstration.</div>
+  </nav>
+  <main>
+  <!-- LIVE -->
+  <section id="v-live">
+    <h2>Live line view</h2>
+    <p class="lead">SCADA and Historian signals with batch context attached by the harmonization layer, which the source systems can't provide on their own.</p>
+    <div class="grid g5" id="kpis"></div>
+    <div class="line" style="margin-top:12px" id="units"></div>
+    <div class="grid" style="grid-template-columns:2fr 1fr;margin-top:12px">
+      <div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="k">Product temperature · current batch (°C, harmonized)</div><div class="note" id="chartLbl"></div></div><div id="liveChart"></div></div>
+      <div class="card"><div class="k" style="margin-bottom:4px">Alarms &amp; batch events</div><div class="feed" id="events"></div></div>
+    </div>
+  </section>
+  <!-- PIPELINE -->
+  <section id="v-pipeline">
+    <h2>Data pipeline · live</h2>
+    <p class="lead">Raw messages arrive in each system's own format, and the engine resolves, contextualizes, validates and publishes them as canonical events.</p>
+    <div class="grid g6" id="pk"></div>
+    <div class="flowcol" style="margin-top:12px">
+      <div class="card"><div class="k">Raw in · native source formats</div><div class="feed" id="rawFeed" style="max-height:420px"></div></div>
+      <div class="engine" id="engine">
+        <div class="k" style="color:#9fb0cc">Harmonization engine</div>
+        <div class="st" id="st1">1 · Resolve<span>IDs → canonical batch</span></div>
+        <div class="st" id="st2">2 · Contextualize<span>ISA-95 + batch window</span></div>
+        <div class="st" id="st3">3 · Validate<span>units, UTC, DQ rules</span></div>
+        <div class="st" id="st4">4 · Publish<span>canonical topic/table</span></div>
+      </div>
+      <div class="card"><div class="k">Canonical out · harmonized events</div><div class="feed" id="harmFeed" style="max-height:420px"></div></div>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="card"><div class="k" style="margin-bottom:8px">Data quality · quarantine &amp; tag mapping</div><div id="mapPanel"></div></div>
+      <div class="card"><div class="k" style="margin-bottom:8px">Master entity registry · one batch, every source key</div><div id="registry"></div></div>
+    </div>
+  </section>
+  <!-- BATCHES -->
+  <section id="v-batches">
+    <h2>Batch explorer</h2>
+    <p class="lead">Every batch reconstructed from four systems. Completed live batches appear here automatically.</p>
+    <div class="bx">
+      <div class="card" style="padding:0;overflow:hidden"><table id="btab"></table></div>
+      <div class="card" id="bdet"></div>
+    </div>
+  </section>
+  <!-- ANALYTICS -->
+  <section id="v-analytics">
+    <h2>Ask the data</h2>
+    <p class="lead">Answers are computed deterministically from the harmonized KPI layer and include batches completed live. A natural-language agent is Phase 2; this version matches keywords.</p>
+    <div class="card">
+      <div class="ask"><input type="text" id="askIn" placeholder="e.g. Does supplier affect yield?"><button class="btn red" id="askBtn">Ask ▶</button></div>
+      <div class="pre" id="presets"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:12px;flex-wrap:wrap" class="note">
+        Query builder:
+        <select id="qm"><option value="yield">Avg yield %</option><option value="cycle">Avg cycle time (h)</option><option value="dry">Avg drying time (h)</option><option value="alarms">Total alarms</option><option value="excmin">Excursion minutes</option></select>
+        by
+        <select id="qg"><option value="api">API lot</option><option value="supplier">Supplier (CDMO)</option><option value="batch">Batch</option><option value="day">Day</option></select>
+        where
+        <select id="qf"><option value="all">all batches</option><option value="alm">batches with alarms</option><option value="clean">batches without alarms</option></select>
+        <span id="interp" style="margin-left:8px"></span>
+      </div>
+    </div>
+    <div class="grid g2" style="margin-top:12px">
+      <div class="card"><div class="k" id="resTitle"></div><div id="resChart"></div><div id="resIns"></div></div>
+      <div class="card"><div class="k">Result table</div><div id="resTab"></div><div class="k" style="margin-top:12px">Generated SQL (Snowflake · harmonized.batch_kpis)</div><div class="mono sql" id="resSql"></div></div>
+    </div>
+  </section>
+  </main>
+</div>
+<div class="tip" id="tip"></div>
+<div id="toasts"></div>
+
+<script>
+/* ============ constants ============ */
+const PHASES=[{name:'Granulation',unit:'GR-201',eq:'GRAN-02',dur:30},{name:'Drying',unit:'FBD-301',eq:'DRY-03',dur:60},{name:'Compression',unit:'TP-401',eq:'PRS-04',dur:45}];
+const UNITS={'GR-201':{name:'High-shear granulator',isa:'BOS1/OSD/L2/GR-201',pi:'\\\\PI-BOS1\\GR-201|Product_Temp'},
+ 'FBD-301':{name:'Fluid-bed dryer',isa:'BOS1/OSD/L2/FBD-301',pi:'\\\\PI-BOS1\\FBD-301|Product_Temp'},
+ 'TP-401':{name:'Tablet press',isa:'BOS1/OSD/L2/TP-401',pi:'\\\\PI-BOS1\\TP-401|Product_Temp'}};
+const EQMAP={'GRAN-02':'GR-201','DRY-03':'FBD-301','PRS-04':'TP-401'};
+const IGN_PREFIX={'GR-201':'GR201','FBD-301':'FBD301','TP-401':'TP401'};
+const API_LOTS=[['CDMO-A','API-2231'],['CDMO-B','API-3310'],['CDMO-A','API-2231'],['CDMO-B','API-3315'],['CDMO-A','API-2236'],['CDMO-B','API-3310']];
+const RISKY='API-2231';
+const LIMIT=45, CHANGE=10;
+const START=Date.UTC(2026,10,10,11,0,0);
+const BASE_TAGMAP={
+ 'GR201.IMP_SPEED':{unit:'GR-201',param:'impeller_speed',uom:'rpm'},
+ 'GR201.POWER':{unit:'GR-201',param:'power',uom:'kW'},
+ 'GR201.PROD_T':{unit:'GR-201',param:'product_temp',uom:'°C'},
+ 'FBD301.INLET_T':{unit:'FBD-301',param:'inlet_air_temp',uom:'°C',conv:'F2C'},
+ 'FBD301.OUTLET_T':{unit:'FBD-301',param:'product_temp',uom:'°C',conv:'F2C'},
+ 'FBD301.LOD':{unit:'FBD-301',param:'moisture_lod',uom:'%'},
+ 'TP401.SPEED':{unit:'TP-401',param:'press_speed',uom:'tab/min'},
+ 'TP401.FORCE':{unit:'TP-401',param:'compression_force',uom:'kN'},
+ 'TP401.PROD_T':{unit:'TP-401',param:'product_temp',uom:'°C'}};
+const NEW_TAG='FBD301.EXH_RH';
+
+/* ============ helpers ============ */
+let seed=7; const rnd=()=>{seed=(seed*16807)%2147483647;return (seed-1)/2147483646;};
+const nz=a=>(rnd()-0.5)*2*a;
+const pad=n=>String(n).padStart(2,'0');
+const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+const est=ms=>new Date(ms-5*3600e3);
+const hm=ms=>{const d=est(ms);return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());};
+const iso=ms=>new Date(ms).toISOString().replace('.000','');
+const mesTime=ms=>{const d=est(ms);return `${pad(d.getUTCMonth()+1)}/${pad(d.getUTCDate())}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} EST`;};
+const ebsTime=ms=>{const d=est(ms);return `${pad(d.getUTCDate())}-${MON[d.getUTCMonth()]}-${String(d.getUTCFullYear()).slice(2)} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;};
+const dayStr=ms=>{const d=est(ms);return `${pad(d.getUTCDate())} ${MON[d.getUTCMonth()].charAt(0)+MON[d.getUTCMonth()].slice(1).toLowerCase()}`;};
+const F=v=>v*9/5+32, C=v=>(v-32)*5/9;
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+/* ============ state ============ */
+let S;
+function init(){
+  seed=7;
+  S={t:START,running:true,speed:5,acc:0,seq:1101,batch:null,idleLeft:2,history:[],
+     raw:[],harm:[],events:[],quar:[],registry:[],
+     c:{raw:0,harm:0,quar:0,lat:420},tagMap:JSON.parse(JSON.stringify(BASE_TAGMAP)),
+     units:{},spark:{'GR-201':[],'FBD-301':[],'TP-401':[]},
+     alarm:null,fault:null,faultArmed:false,seeding:true,newTag:false,newTagAnnounced:false,manualFaults:0};
+  for(const u in UNITS) S.units[u]={status:'Idle',vals:{}};
+  // fast-forward history
+  while(S.history.length<10) stepMinute();
+  S.seeding=false;
+  S.raw=[];S.harm=[];S.quar=[];S.c={raw:0,harm:0,quar:0,lat:420};
+  S.events=S.events.slice(0,12);
+  S.newTag=true;
+  selBatch=null;
+}
+
+/* ============ simulation ============ */
+function startBatch(){
+  const n=S.seq++; const [sup,api]=API_LOTS[n%API_LOTS.length];
+  const b={n,id:'BATCH-'+n,lot:'L24-'+n,mes:'B2411-'+(n-1000),api,sup,
+    mcc:'MCC-'+(7700+Math.floor(n/3)),mg:'MGS-'+(1100+Math.floor(n/4)),
+    ws:[],ef:[],windows:[],phases:PHASES.map(p=>({...p})),pi:0,pm:0,m:0,series:[],alarms:[],
+    start:S.t,src:{EBS:0,MES:0,PI:0,IGN:0},hadFault:false,lod:18};
+  S.batch=b;
+  const reg={id:b.id,lot:b.lot,mes:b.mes,ws:b.ws,ef:b.ef,status:'Partial'}; b.reg=reg;
+  S.registry.unshift(reg); S.registry=S.registry.slice(0,12);
+  emit('EBS',{LOT_NUMBER:b.lot,ITEM:'PRD-A-100-TAB',TXN_TYPE:'WIP JOB CREATE',ORG:'BOS',TXN_DATE:ebsTime(S.t)});
+  [[api,'API'],[b.mcc,'MCC'],[b.mg,'MG-STEARATE']].forEach(([l,i])=>emit('EBS',{LOT_NUMBER:b.lot,TXN_TYPE:'WIP ISSUE',COMPONENT:i,COMPONENT_LOT:l,TXN_DATE:ebsTime(S.t)}));
+  emit('MES',{eBR:{BatchID:b.mes,Recipe:'PRD-A-100',Event:'BATCH_START',LocalTime:mesTime(S.t)}});
+  event('▶',`${b.id} started · API lot ${api} (${sup})`);
+  startPhase();
+}
+function startPhase(){
+  const b=S.batch, p=b.phases[b.pi];
+  const ws='WS-'+(52000+b.n*3+b.pi), ef=`EF_${p.name.slice(0,4).toUpperCase()}_${b.n}`;
+  b.ws.push(ws); b.ef.push(ef); b.windows.push({unit:p.unit,start:S.t,end:null});
+  if(b.ws.length===3) b.reg.status='Resolved';
+  emit('MES',{eBR:{BatchID:b.mes,Worksheet:ws,Step:p.name.toUpperCase(),Equip:p.eq,Status:'STARTED',LocalTime:mesTime(S.t)}});
+  emit('PI',{EventFrame:ef,Element:'\\\\PI-BOS1\\'+p.unit,Template:p.name,StartTime:iso(S.t)});
+  if(p.name==='Drying'){
+    const pr = b.api===RISKY ? (S.seeding?0.75:0.35) : (S.seeding?0.08:0.05);
+    if(rnd()<pr) b.spont=true;
+  }
+}
+function endPhase(){
+  const b=S.batch,p=b.phases[b.pi];
+  b.windows[b.pi].end=S.t;
+  emit('MES',{eBR:{BatchID:b.mes,Worksheet:b.ws[b.pi],Step:p.name.toUpperCase(),Equip:p.eq,Status:'COMPLETED',LocalTime:mesTime(S.t)}});
+  emit('PI',{EventFrame:b.ef[b.pi],EndTime:iso(S.t)});
+}
+function completeBatch(){
+  const b=S.batch;
+  const excMin=b.alarms.reduce((a,x)=>a+x.dur,0);
+  b.yld=Math.max(85,Math.min(99.2,98.3-1.8*b.alarms.length-0.08*excMin+nz(0.4)));
+  b.yld=Math.round(b.yld*10)/10;
+  b.end=S.t; b.cycle=(b.end-b.start)/3600e3; b.dry=b.phases[1].dur/60; b.excMin=excMin;
+  b.status=b.alarms.length?'Under review':'Released';
+  emit('EBS',{LOT_NUMBER:b.lot,TXN_TYPE:'WIP COMPLETION',QTY:(118.4*b.yld/98).toFixed(1),UOM:'KG',TXN_DATE:ebsTime(S.t)});
+  emit('MES',{eBR:{BatchID:b.mes,Event:'BATCH_COMPLETE',Yield:b.yld,LocalTime:mesTime(S.t)}});
+  S.history.unshift(b); S.batch=null; S.idleLeft=CHANGE;
+  event(b.alarms.length?'⚠':'✓',`${b.id} completed · yield ${b.yld}%${b.alarms.length?' · '+b.alarms.length+' alarm(s), sent for review':''}`);
+  toast(`${b.id} completed: yield ${b.yld}%. Added to Batch explorer and KPIs.`, b.alarms.length?'warn':'ok');
+}
+function stepMinute(){
+  S.t+=60000;
+  const b=S.batch;
+  let active=null, prodT=null;
+  if(!b){ S.idleLeft--; if(S.idleLeft<=0){startBatch();} }
+  const bb=S.batch;
+  if(bb){
+    const p=bb.phases[bb.pi]; active=p.unit;
+    if(p.name==='Drying' && !S.fault){
+      if((S.faultArmed||bb.spont) && bb.pm>=Math.round(p.dur*0.3)){
+        S.fault={len:9,left:9,manual:S.faultArmed}; if(S.faultArmed) S.manualFaults++;
+        S.faultArmed=false; bb.spont=false; bb.hadFault=true; p.dur+=12;
+        if(!S.seeding) event('⚡','Dryer outlet temperature rising on FBD-301');
+      }
+    }
+  }
+  // unit values
+  for(const u in UNITS){
+    const on=(u===active);
+    const st=S.units[u]; st.status=on?'Running':'Idle';
+    const ph=bb?bb.phases[bb.pi]:null; const k=ph?bb.pm/ph.dur:0;
+    if(u==='GR-201'){ st.vals=on?{impeller_speed:250+nz(5),power:8+6*k+nz(0.3),product_temp:24+nz(0.6)}:{impeller_speed:0,power:0.3+nz(0.05),product_temp:21+nz(0.3)}; }
+    if(u==='FBD-301'){
+      if(on){ let t=k<0.15?25+(k/0.15)*15:40+Math.sin(k*9)*0.6+nz(0.7);
+        if(S.fault){const x=(S.fault.len-S.fault.left)/S.fault.len; t+=8*Math.sin(x*Math.PI); S.fault.left--; if(S.fault.left<=0)S.fault=null;}
+        bb.lod=Math.max(1.6,bb.lod*0.955+nz(0.05));
+        st.vals={inlet_air_temp:60+nz(1),product_temp:t,moisture_lod:bb.lod,exhaust_rh:35-20*k+nz(1)}; }
+      else st.vals={inlet_air_temp:22+nz(0.5),product_temp:21+nz(0.3),moisture_lod:0,exhaust_rh:40+nz(1)};
+    }
+    if(u==='TP-401'){ st.vals=on?{press_speed:1800+nz(40),compression_force:12+nz(0.6),product_temp:22+nz(0.5)}:{press_speed:0,compression_force:0,product_temp:21+nz(0.3)}; }
+    if(on) prodT=st.vals.product_temp;
+    const sp=S.spark[u]; sp.push(u==='GR-201'?st.vals.power:u==='FBD-301'?st.vals.product_temp:st.vals.press_speed); if(sp.length>60)sp.shift();
+  }
+  // telemetry
+  for(const u in UNITS){
+    if(u===active || est(S.t).getUTCMinutes()%5===0){
+      const pre=IGN_PREFIX[u], v=S.units[u].vals;
+      const metrics=Object.entries(BASE_TAGMAP).filter(([t,m])=>m.unit===u).map(([t,m])=>({name:t,value:+(m.conv==='F2C'?F(v[m.param]):v[m.param]).toFixed(2),units:m.conv==='F2C'?'degF':m.uom}));
+      if(u==='FBD-301' && S.newTag) metrics.push({name:NEW_TAG,value:+v.exhaust_rh.toFixed(1),units:'%'});
+      emit('IGN',{topic:`spBv1.0/BOS1/DDATA/L2/${pre}`,timestamp:S.t,metrics});
+    }
+  }
+  if(active) emit('PI',{Path:UNITS[active].pi,Timestamp:iso(S.t),Value:+prodT.toFixed(2),UOM:'degC'});
+  // series + alarms
+  if(bb){
+    const p=bb.phases[bb.pi];
+    bb.series.push({m:bb.m++,v:prodT,ph:p.name});
+    if(p.name==='Drying'){
+      if(prodT>LIMIT && !S.alarm){ S.alarm={batch:bb.id,start:S.t,peak:prodT};
+        emit('IGN',{topic:'spBv1.0/BOS1/NDATA/L2/ALARMS',timestamp:S.t,alarm:{source:'FBD301.OUTLET_T',state:'ACTIVE',priority:'HIGH',value:+F(prodT).toFixed(1),units:'degF'}});
+        event('🔴',`ALARM FBD301.OUTLET_T HI · ${prodT.toFixed(1)} °C · ${bb.id}`,'bad');
+        toast(`Alarm on FBD-301: product temp ${prodT.toFixed(1)} °C &gt; ${LIMIT} °C. Linked to ${bb.id}, ${bb.ws[bb.pi]}.`,'bad'); }
+      else if(S.alarm){ if(prodT>LIMIT) S.alarm.peak=Math.max(S.alarm.peak,prodT);
+        else { const a=S.alarm; a.end=S.t; a.dur=Math.round((a.end-a.start)/60000); bb.alarms.push(a); S.alarm=null;
+          emit('IGN',{topic:'spBv1.0/BOS1/NDATA/L2/ALARMS',timestamp:S.t,alarm:{source:'FBD301.OUTLET_T',state:'CLEARED'}});
+          event('🟢',`Alarm cleared · ${a.dur} min · peak ${a.peak.toFixed(1)} °C`); } }
+    }
+    bb.pm++;
+    if(bb.pm>=p.dur){ endPhase(); bb.pi++; bb.pm=0; if(bb.pi>=3) completeBatch(); else startPhase(); }
+  }
+}
+
+/* ============ harmonizer ============ */
+let flashT=0, mseq=0, seenRaw=0, seenHarm=0;
+function emit(src,raw){
+  const msg={src,t:S.t,raw,q:++mseq}; S.c.raw++;
+  if(S.batch) S.batch.src[src]++;
+  const out=harmonize(msg);
+  if(S.seeding) return;
+  S.raw.unshift(msg); if(S.raw.length>40)S.raw.pop();
+  out.forEach(e=>{S.harm.unshift(e);}); if(S.harm.length>50)S.harm.length=50;
+  flashT=Date.now();
+}
+function lookupBatch(unit,ts){
+  const cands=[S.batch,...S.history.slice(0,15)].filter(Boolean);
+  for(const b of cands) for(const w of b.windows) if(w.unit===unit && ts>=w.start && (w.end===null||ts<=w.end)) return b;
+  return null;
+}
+function pushH(e){ e.q=++mseq; S.c.harm++; S.c.lat=S.c.lat*0.9+(150+rnd()*600)*0.1; return e; }
+function harmonize(m){
+  const r=m.raw, out=[];
+  if(m.src==='IGN'){
+    if(r.alarm){ const b=lookupBatch('FBD-301',m.t);
+      out.push(pushH({batch:b?b.id:null,isa:UNITS['FBD-301'].isa,param:'alarm.product_temp_hi',value:r.alarm.state,uom:'',t:m.t,notes:['tag→ISA-95','+batch ctx']})); return out; }
+    for(const mt of r.metrics){
+      const map=S.tagMap[mt.name];
+      if(!map){ S.c.quar++; if(!S.seeding) S.quar.push({tag:mt.name,value:mt.value,units:mt.units,t:m.t,unit:'FBD-301'});
+        if(!S.seeding && !S.newTagAnnounced){S.newTagAnnounced=true; toast(`New tag <b>${mt.name}</b> detected with no mapping. Messages are quarantined; see Data pipeline.`,'warn'); event('⚠',`Unmapped tag ${mt.name} quarantined`);}
+        continue; }
+      const b=lookupBatch(map.unit,m.t);
+      const val=map.conv==='F2C'?C(mt.value):mt.value;
+      const notes=['tag→ISA-95','epoch→UTC']; if(map.conv)notes.push('°F→°C'); if(b)notes.push('+batch ctx');
+      if(map.param==='product_temp'||map.param==='press_speed'||map.param==='moisture_lod'||map.param==='exhaust_rh')
+        out.push(pushH({batch:b?b.id:null,isa:UNITS[map.unit].isa,param:map.param,value:val,uom:map.uom,t:m.t,notes}));
+      else S.c.harm++;
+    }
+  } else if(m.src==='PI'){
+    if(r.EventFrame){ const b=S.batch||S.history[0];
+      out.push(pushH({batch:b?b.id:null,isa:'event_frame',param:r.StartTime?'phase_start':'phase_end',value:r.EventFrame,uom:'',t:m.t,notes:['EF→batch phase']})); }
+    else { const unit=Object.keys(UNITS).find(u=>UNITS[u].pi===r.Path); const b=lookupBatch(unit,m.t);
+      out.push(pushH({batch:b?b.id:null,isa:UNITS[unit].isa,param:'product_temp',value:r.Value,uom:'°C',t:m.t,notes:['AF path→ISA-95',b?'+batch ctx':'idle']})); }
+  } else if(m.src==='MES'){
+    const e=r.eBR; const b=[S.batch,...S.history.slice(0,3)].find(x=>x&&x.mes===e.BatchID);
+    const notes=['MES ID→canonical','EST→UTC']; if(e.Equip)notes.push(`${e.Equip}→${EQMAP[e.Equip]}`);
+    out.push(pushH({batch:b?b.id:null,isa:e.Equip?UNITS[EQMAP[e.Equip]].isa:'BOS1/OSD/L2',param:'mes.'+(e.Step?e.Step.toLowerCase()+'_'+e.Status.toLowerCase():e.Event.toLowerCase()),value:e.Worksheet||'',uom:'',t:m.t,notes}));
+  } else if(m.src==='EBS'){
+    const b=[S.batch,...S.history.slice(0,3)].find(x=>x&&x.lot===r.LOT_NUMBER);
+    out.push(pushH({batch:b?b.id:null,isa:'ERP/BOS',param:'erp.'+r.TXN_TYPE.toLowerCase().replace(/ /g,'_'),value:r.COMPONENT_LOT||r.QTY||'',uom:r.UOM||'',t:m.t,notes:['Lot→canonical','local→UTC']}));
+  }
+  return out;
+}
+function mapTag(tag,unit,param,uom){
+  S.tagMap[tag]={unit,param,uom};
+  const items=S.quar.filter(q=>q.tag===tag); S.quar=S.quar.filter(q=>q.tag!==tag);
+  items.forEach(q=>{const b=lookupBatch(unit,q.t); S.harm.unshift(pushH({batch:b?b.id:null,isa:UNITS[unit].isa,param,value:q.value,uom,t:q.t,notes:['replayed from S3 raw','tag→ISA-95',b?'+batch ctx':'idle']}));});
+  S.c.quar-=items.length; if(S.harm.length>50)S.harm.length=50;
+  toast(`Mapped <b>${tag}</b> → ${unit} · ${param}. Replayed ${items.length} quarantined messages from the raw landing zone.`,'ok');
+  event('✓',`Tag ${tag} mapped; ${items.length} msgs replayed`);
+  mapKey=''; render();
+}
+function event(ic,txt,cls){ if(S.seeding&&S.events.length>30)return; S.events.unshift({t:S.t,ic,txt,cls}); if(S.events.length>60)S.events.pop(); }
+
+/* ============ UI ============ */
+let view='live', selBatch=null, mapKey='', lastHist=-1;
+const $=id=>document.getElementById(id);
+function toast(html,cls=''){ if(S&&S.seeding)return; const d=document.createElement('div'); d.className='toast '+cls; d.innerHTML=html; $('toasts').appendChild(d); setTimeout(()=>d.remove(),5200); }
+function show(v){ if(!['live','pipeline','batches','analytics'].includes(v))v='live'; view=v;
+  document.querySelectorAll('section').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  document.querySelectorAll('.side a').forEach(a=>a.classList.toggle('on',a.dataset.v===v));
+  lastHist=-1; mapKey=''; render(); }
+window.addEventListener('hashchange',()=>show(location.hash.slice(1)));
+
+function spark(arr,color,lo,hi){ if(arr.length<2)return ''; const W=130,H=30;
+  const mn=lo??Math.min(...arr), mx=hi??Math.max(...arr), rg=(mx-mn)||1;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="30" preserveAspectRatio="none"><polyline fill="none" stroke="${color}" stroke-width="1.5" points="${arr.map((v,i)=>(i/(59)*W).toFixed(1)+','+(H-2-(v-mn)/rg*(H-4)).toFixed(1)).join(' ')}"/></svg>`; }
+
+function chart(series,total,opts={}){
+  const W=760,H=opts.h||220,L=34,R=8,T=10,B=24, lo=15,hi=52;
+  const x=m=>L+m/Math.max(total,1)*(W-L-R), y=v=>T+(1-(v-lo)/(hi-lo))*(H-T-B);
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" class="ch">`;
+  // phase bands
+  const cols={Granulation:'#efeafe',Drying:'#e2edff',Compression:'#e5f6ef'};
+  let runs=[]; series.forEach(p=>{ const r=runs[runs.length-1]; if(!r||r.ph!==p.ph) runs.push({ph:p.ph,a:p.m,z:p.m}); else r.z=p.m; });
+  runs.forEach(r=>{s+=`<rect x="${x(r.a)}" y="${T}" width="${Math.max(0,x(r.z+1)-x(r.a))}" height="${H-T-B}" fill="${cols[r.ph]}"/><text x="${x(r.a)+5}" y="${T+13}" font-size="10.5" fill="#5d6b82" font-weight="600">${r.ph}</text>`;});
+  [20,30,40,50].forEach(v=>{s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="#e3e8f0"/><text x="${L-5}" y="${y(v)+3}" font-size="9.5" text-anchor="end" fill="#8a96aa">${v}</text>`;});
+  for(let m=0;m<=total;m+=30) s+=`<text x="${x(m)}" y="${H-7}" font-size="9.5" text-anchor="middle" fill="#8a96aa">${m}m</text>`;
+  s+=`<line x1="${L}" x2="${W-R}" y1="${y(LIMIT)}" y2="${y(LIMIT)}" stroke="#dc2626" stroke-dasharray="5 4" opacity=".8"/><text x="${W-R-3}" y="${y(LIMIT)-4}" font-size="9.5" text-anchor="end" fill="#dc2626">Drying limit ${LIMIT} °C</text>`;
+  if(series.length>1) s+=`<polyline fill="none" stroke="#0f1b33" stroke-width="1.6" points="${series.map(p=>x(p.m).toFixed(1)+','+y(p.v).toFixed(1)).join(' ')}"/>`;
+  series.filter(p=>p.ph==='Drying'&&p.v>LIMIT).forEach(p=>s+=`<circle cx="${x(p.m)}" cy="${y(p.v)}" r="3" fill="#dc2626"/>`);
+  if(opts.live&&series.length){const p=series[series.length-1]; s+=`<circle cx="${x(p.m)}" cy="${y(p.v)}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2"/>`;}
+  return s+'</svg>';
+}
+
+function renderTop(){
+  $('clkL').textContent=hm(S.t)+' EST'; $('clkU').textContent=iso(S.t).slice(0,16).replace('T',' ')+' UTC';
+  $('top').classList.toggle('paused',!S.running); $('liveTxt').textContent=S.running?'LIVE':'PAUSED';
+  $('playBtn').textContent=S.running?'⏸ Pause':'▶ Play';
+  $('faultBtn').textContent=S.faultArmed?'⚡ Fault armed…':'⚡ Inject dryer fault';
+  const q=S.quar.length; $('qBadge').style.display=q?'inline-block':'none'; $('qBadge').textContent=q;
+}
+
+function renderLive(){
+  const b=S.batch, p=b?b.phases[b.pi]:null;
+  const done=S.history.filter(h=>est(h.end).getUTCDate()===est(S.t).getUTCDate()).length;
+  const last5=S.history.slice(0,5), avgY=(last5.reduce((a,x)=>a+x.yld,0)/last5.length).toFixed(1);
+  const tot=b?b.phases.reduce((a,x)=>a+x.dur,0):1, el=b?b.m:0;
+  $('kpis').innerHTML=`
+   <div class="card"><div class="k">Current batch</div><div class="v" style="font-size:18px">${b?b.id:'Changeover'}</div><div class="note">${b?`${p.name} · ${b.ws[b.pi]}`:`next batch in ${S.idleLeft} min`}</div></div>
+   <div class="card"><div class="k">Batch progress</div><div class="v">${b?Math.round(el/tot*100):0}<small>%</small></div><div class="bar"><div style="width:${b?el/tot*100:0}%"></div></div></div>
+   <div class="card"><div class="k">Batches completed today</div><div class="v">${done}</div><div class="note">Line L2</div></div>
+   <div class="card"><div class="k">Avg yield · last 5</div><div class="v">${avgY}<small>%</small></div><div class="note">from harmonized KPIs</div></div>
+   <div class="card"><div class="k">Active alarms</div><div class="v" style="color:${S.alarm?'var(--red)':'var(--green)'}">${S.alarm?1:0}</div><div class="note">${S.alarm?'FBD301.OUTLET_T HI':'all clear'}</div></div>`;
+  const lab={impeller_speed:['rpm',0],power:['kW',1],product_temp:['°C',1],inlet_air_temp:['Inlet °C',1],moisture_lod:['LOD %',1],press_speed:['tab/min',0],compression_force:['kN',1]};
+  const show3={'GR-201':['impeller_speed','power','product_temp'],'FBD-301':['product_temp','inlet_air_temp','moisture_lod'],'TP-401':['press_speed','compression_force','product_temp']};
+  const spk={'GR-201':['#7c3aed','power kW'],'FBD-301':['#dc2626','product °C'],'TP-401':['#0e8aa8','tab/min']};
+  $('units').innerHTML=Object.keys(UNITS).map((u,i)=>{
+    const st=S.units[u], on=st.status==='Running', alm=S.alarm&&u==='FBD-301';
+    const ctx=on&&b?`<b>${b.id}</b> · ${b.ws[b.pi]} · ${b.ef[b.pi]}`:'No batch: idle';
+    return `${i?'<div class="arr">➜</div>':''}<div class="unit ${on?'act':''} ${alm?'alm':''}">
+      <div style="display:flex;justify-content:space-between"><div><h4>${u}</h4><div class="sub">${UNITS[u].name}</div></div><span class="tag ${alm?'bad':on?'run':''}">${alm?'ALARM':st.status}</span></div>
+      <div class="vals">${show3[u].map(k=>{const v=st.vals[k]??0; const hot=k==='product_temp'&&u==='FBD-301'&&v>LIMIT; return `<div><b style="${hot?'color:var(--red)':''}">${v.toFixed(lab[k][1])}</b><span>${lab[k][0]}</span></div>`;}).join('')}</div>
+      <div style="margin-top:8px">${spark(S.spark[u],spk[u][0])}<div class="note">last 60 min · ${spk[u][1]}</div></div>
+      <div class="ctx">Batch context: ${ctx}</div></div>`;}).join('');
+  $('chartLbl').textContent=b?`${b.id} · minute ${b.m} of ~${tot}`:'Waiting for next batch…';
+  $('liveChart').innerHTML=b?chart(b.series,tot,{live:true}):chart(S.history[0].series,S.history[0].series.length,{});
+  $('events').innerHTML=S.events.slice(0,30).map(e=>`<div class="ev"><span class="tm">${hm(e.t)}</span><span>${e.ic}</span><span style="${e.cls==='bad'?'color:var(--red);font-weight:600':''}">${e.txt}</span></div>`).join('');
+}
+
+function rawLine(m){ const j=JSON.stringify(m.raw); return `<div class="msg ${m.q>seenRaw?'new':''}"><span class="src s-${m.src}">${{EBS:'ORACLE EBS',MES:'POMS MES',PI:'PI',IGN:'IGNITION'}[m.src]}</span> <span class="note">${hm(m.t)}</span><div class="mono">${esc(j.length>230?j.slice(0,230)+'…':j)}</div></div>`; }
+function harmLine(e){ const v=typeof e.value==='number'?e.value.toFixed(2):e.value;
+  return `<div class="msg ${e.q>seenHarm?'new':''}"><b>${e.batch||'<span class="note">— idle (no batch) —</span>'}</b> <span class="note">${iso(e.t)}</span><div class="mono">${esc(e.isa)} · <b>${esc(e.param)}</b>${v!==''?' = '+esc(v)+' '+esc(e.uom):''}</div><div>${e.notes.map(n=>`<span class="chip">${n}</span>`).join('')}</div></div>`; }
+function renderPipe(){
+  const regOk=S.registry.filter(r=>r.status==='Resolved'||(S.batch&&r.id===S.batch.id)).length, regAll=S.registry.length;
+  const seen=Object.keys(S.tagMap).length+(S.tagMap[NEW_TAG]?0:1), mapped=Object.keys(S.tagMap).length;
+  $('pk').innerHTML=`
+   <div class="card"><div class="k">Raw messages</div><div class="v">${S.c.raw.toLocaleString()}</div></div>
+   <div class="card"><div class="k">Canonical events</div><div class="v">${S.c.harm.toLocaleString()}</div></div>
+   <div class="card"><div class="k">Quarantined</div><div class="v" style="color:${S.quar.length?'var(--red)':'var(--green)'}">${S.quar.length}</div></div>
+   <div class="card"><div class="k">Entity match rate</div><div class="v">${Math.round(regOk/Math.max(regAll,1)*100)}<small>%</small></div><div class="note">batches with all source keys linked</div></div>
+   <div class="card"><div class="k">Tag mapping coverage</div><div class="v" style="color:${mapped<seen?'var(--amber)':'inherit'}">${Math.round(mapped/seen*100)}<small>%</small></div><div class="note">${mapped}/${seen} tags</div></div>
+   <div class="card"><div class="k">Freshness (avg latency)</div><div class="v">${(S.c.lat/1000).toFixed(2)}<small>s</small></div><div class="note">hot-path SLI &lt; 60 s</div></div>`;
+  $('rawFeed').innerHTML=S.raw.slice(0,18).map(rawLine).join('');
+  $('harmFeed').innerHTML=S.harm.slice(0,18).map(harmLine).join('');
+  seenRaw=S.raw.length?S.raw[0].q:seenRaw; seenHarm=S.harm.length?Math.max(...S.harm.slice(0,18).map(x=>x.q)):seenHarm;
+  const fl=Date.now()-flashT<300; ['st1','st2','st3','st4'].forEach((id,i)=>$(id).classList.toggle('flash',fl&&(Math.floor(Date.now()/120)%4===i)));
+  // mapping panel
+  const groups={}; S.quar.forEach(q=>{(groups[q.tag]=groups[q.tag]||[]).push(q);});
+  const key=Object.keys(groups).join(',');
+  if(key!==mapKey){ mapKey=key;
+    $('mapPanel').innerHTML=Object.keys(groups).length?Object.entries(groups).map(([tag,arr])=>`
+      <div class="qbox"><div style="display:flex;justify-content:space-between;align-items:center"><div><span class="chip q">UNMAPPED TAG</span> <b class="mono">${tag}</b></div><span class="note"><b id="qc_${tag.replace('.','_')}">${arr.length}</b> msgs quarantined</span></div>
+      <div class="note" style="margin:6px 0">Rule failed: <i>every SCADA tag must map to an ISA-95 asset and a canonical parameter</i>. Sample value: <span class="mono" id="qs_${tag.replace('.','_')}">${arr[arr.length-1].value} ${arr[arr.length-1].units}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select id="mu"><option>FBD-301</option><option>GR-201</option><option>TP-401</option></select>
+        <input type="text" id="mp" value="exhaust_rh" style="width:120px">
+        <select id="mo"><option>%RH</option><option>%</option></select>
+        <button class="btn red" onclick="mapTag('${tag}',$('mu').value,$('mp').value,$('mo').value)">Map &amp; reprocess</button>
+      </div></div>`).join('')
+      :`<div class="note" style="padding:6px 0">✓ No quarantined messages. All tags are mapped.</div>`+
+       `<table style="margin-top:6px"><tr><th>DQ rule</th><th>Status</th></tr>
+        <tr><td>Every SCADA tag mapped to an ISA-95 asset</td><td><span class="tag ok">pass</span></td></tr>
+        <tr><td>Timestamps normalised to UTC</td><td><span class="tag ok">pass</span></td></tr>
+        <tr><td>Units canonical (°F → °C)</td><td><span class="tag ok">pass</span></td></tr>
+        <tr><td>Batch quantity reconciles to EBS</td><td><span class="tag ok">pass</span></td></tr></table>`;
+  } else { Object.entries(groups).forEach(([tag,arr])=>{const c=$('qc_'+tag.replace('.','_')); if(c)c.textContent=arr.length; const sm=$('qs_'+tag.replace('.','_')); if(sm)sm.textContent=arr[arr.length-1].value+' '+arr[arr.length-1].units;}); }
+  $('registry').innerHTML=`<table><tr><th>Canonical</th><th>EBS lot</th><th>MES batch</th><th>Worksheets</th><th>PI event frames</th><th></th></tr>${S.registry.slice(0,7).map(r=>`<tr><td style="white-space:nowrap"><b>${r.id}</b></td><td class="mono">${r.lot}</td><td class="mono">${r.mes}</td><td class="mono">${r.ws.join('<br>')||'—'}</td><td class="mono">${r.ef.join('<br>')||'—'}</td><td><span class="tag ${r.status==='Resolved'?'ok':'run'}">${r.status==='Resolved'?'Resolved':'Linking…'}</span></td></tr>`).join('')}</table>`;
+}
+
+function allBatches(){ return (S.batch?[S.batch]:[]).concat(S.history); }
+function renderBatches(){
+  const list=allBatches(); const sig=S.history.length+'|'+(S.batch?S.batch.id:'');
+  if(!selBatch) selBatch=S.history[0];
+  if(sig!==lastHist){ lastHist=sig;
+    $('btab').innerHTML=`<tr><th>Batch</th><th>API lot</th><th>Yield</th><th>Status</th></tr>`+list.map(b=>`<tr class="click ${b===selBatch?'sel':''}" data-id="${b.id}"><td><b>${b.id}</b><div class="note">${dayStr(b.start)} ${hm(b.start)}</div></td><td class="mono">${b.api}<div class="note">${b.sup}</div></td><td>${b.yld?b.yld+'%':'—'}</td><td>${b===S.batch?'<span class="tag run">Running</span>':`<span class="tag ${b.alarms.length?'bad':'ok'}">${b.status}</span>`}</td></tr>`).join('');
+    document.querySelectorAll('#btab tr.click').forEach(tr=>tr.onclick=()=>{selBatch=list.find(x=>x.id===tr.dataset.id); lastHist=-1; renderBatches();});
+  }
+  const b=selBatch, live=b===S.batch; if(!b)return;
+  if(!live && $('bdet').dataset.id===b.id) return;
+  $('bdet').dataset.id=live?'':b.id;
+  const tot=b.phases.reduce((a,x)=>a+x.dur,0);
+  $('bdet').innerHTML=`
+   <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px">
+     <div><div class="k">Canonical batch</div><div style="font-size:18px;font-weight:700">${b.id} ${live?'<span class="tag run">Running</span>':`<span class="tag ${b.alarms.length?'bad':'ok'}">${b.status}</span>`}</div>
+       <div class="note">BOS1 › OSD › L2 · Product A 100 mg · started ${dayStr(b.start)} ${hm(b.start)} EST</div></div>
+     <div style="display:flex;gap:18px">
+       <div><div class="k">Yield</div><div class="v" style="color:${b.yld&&b.yld<95?'var(--red)':'inherit'}">${b.yld?b.yld+'%':'—'}</div></div>
+       <div><div class="k">Cycle</div><div class="v">${live?(b.m/60).toFixed(1)+'h…':b.cycle.toFixed(1)+'h'}</div></div>
+       <div><div class="k">Alarms</div><div class="v" style="color:${b.alarms.length?'var(--red)':'inherit'}">${b.alarms.length}</div></div></div>
+   </div>
+   <div class="k" style="margin-top:12px">Resolved identifiers</div>
+   <div class="gene" style="margin-top:4px"><div class="n b">${b.id}<small>canonical</small></div>⇄
+     <div class="n">${b.lot}<small>EBS lot</small></div><div class="n">${b.mes}<small>MES batch</small></div>
+     <div class="n">${b.ws.join(' / ')||'—'}<small>MES worksheets</small></div><div class="n">${b.ef.join(' / ')||'—'}<small>PI event frames</small></div></div>
+   <div class="k" style="margin-top:12px">Genealogy</div>
+   <div class="gene" style="margin-top:4px"><div class="n c">${b.api}<small>API · ${b.sup}</small></div><div class="n">${b.mcc}<small>Excipient MCC</small></div><div class="n">${b.mg}<small>Mg stearate</small></div> ➜
+     <div class="n b">${b.id}<small>${b.lot}</small></div> ➜ ${b.phases.map((p,i)=>`<div class="n">${p.unit}<small>${p.name} · ${p.dur} min</small></div>`).join('')}</div>
+   <div class="k" style="margin-top:12px">Product temperature (°C), phases from PI event frames</div>
+   ${chart(b.series,live?tot:b.series.length,{live,h:200})}
+   ${b.alarms.length?`<table><tr><th>Alarm</th><th>Start (EST)</th><th>Duration</th><th>Peak</th><th>Worksheet</th></tr>${b.alarms.map(a=>`<tr><td>FBD301.OUTLET_T HI</td><td>${hm(a.start)}</td><td>${a.dur} min</td><td style="color:var(--red);font-weight:600">${a.peak.toFixed(1)} °C</td><td class="mono">${b.ws[1]}</td></tr>`).join('')}</table>`:''}
+   <div class="k" style="margin-top:12px">Source lineage · messages harmonized into this batch</div>
+   <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap">${Object.entries(b.src).map(([k,v])=>`<span class="tag"><span class="src s-${k}" style="min-width:0">${k}</span> ${v}</span>`).join('')}</div>`;
+}
+
+/* analytics */
+const MET={yield:['Avg yield %',b=>b.yld,'avg','yield_pct',1],cycle:['Avg cycle time (h)',b=>b.cycle,'avg','cycle_time_h',2],dry:['Avg drying time (h)',b=>b.dry,'avg','drying_time_h',2],alarms:['Total alarms',b=>b.alarms.length,'sum','alarm_count',0],excmin:['Excursion minutes',b=>b.excMin,'sum','excursion_min',0]};
+const GRP={api:['API lot',b=>b.api,'api_lot'],supplier:['Supplier (CDMO)',b=>b.sup,'supplier'],batch:['Batch',b=>b.id,'batch_id'],day:['Day',b=>dayStr(b.start),'batch_date']};
+const PRESETS=['Does supplier affect yield?','Which API lot causes the most alarms?','Average cycle time by day','Drying time by API lot','Yield by batch'];
+function parseAsk(q){ q=q.toLowerCase();
+  const m=/yield/.test(q)?'yield':/dry/.test(q)?'dry':/cycle|time|duration|long/.test(q)?'cycle':/alarm|excursion|deviation|fault/.test(q)?(/minute/.test(q)?'excmin':'alarms'):null;
+  const g=/supplier|cdmo|vendor/.test(q)?'supplier':/lot|api|material/.test(q)?'api':/day|date|daily/.test(q)?'day':/batch/.test(q)?'batch':null;
+  return {m,g}; }
+function runQuery(){
+  const m=$('qm').value,g=$('qg').value,f=$('qf').value, M=MET[m],G=GRP[g];
+  let rows=S.history.filter(b=>f==='all'||(f==='alm'?b.alarms.length:!b.alarms.length));
+  const grp={}; rows.forEach(b=>{const k=G[1](b);(grp[k]=grp[k]||[]).push(b);});
+  let res=Object.entries(grp).map(([k,bs])=>{const vals=bs.map(M[1]); const s=vals.reduce((a,c)=>a+c,0); return {k,v:M[2]==='avg'?s/vals.length:s,n:bs.length};});
+  res.sort((a,b)=>b.v-a.v); if(g==='batch')res=res.slice(0,12);
+  $('resTitle').textContent=`${M[0]} by ${G[0]} · ${rows.length} batches`;
+  const W=520,rh=26,H=res.length*rh+10,mx=Math.max(...res.map(r=>r.v),0.01), mn=m==='yield'?Math.min(...res.map(r=>r.v))-2:0;
+  $('resChart').innerHTML=res.length?`<svg viewBox="0 0 ${W} ${H}" width="100%">${res.map((r,i)=>{const w=Math.max(2,(r.v-mn)/(mx-mn||1)*(W-230)); return `<text x="0" y="${i*rh+18}" font-size="11.5" fill="#1b2333">${r.k}</text><rect x="130" y="${i*rh+6}" width="${w}" height="16" rx="3" fill="${i===0&&m!=='yield'?'#e31837':i===res.length-1&&m==='yield'?'#e31837':'#2563eb'}" opacity=".85"/><text x="${136+w}" y="${i*rh+18}" font-size="11" fill="#5d6b82">${r.v.toFixed(M[4])} (n=${r.n})</text>`;}).join('')}</svg>`:'<p class="note">No batches match.</p>';
+  $('resTab').innerHTML=`<table><tr><th>${G[0]}</th><th>${M[0]}</th><th>Batches</th></tr>${res.map(r=>`<tr><td>${r.k}</td><td><b>${r.v.toFixed(M[4])}</b></td><td>${r.n}</td></tr>`).join('')}</table>`;
+  $('resSql').textContent=`SELECT ${G[2]},\n       ${M[2].toUpperCase()}(${M[3]}) AS ${m},\n       COUNT(*) AS batches\nFROM harmonized.batch_kpis\nWHERE line = 'L2'${f==='alm'?'\n  AND alarm_count > 0':f==='clean'?'\n  AND alarm_count = 0':''}\nGROUP BY ${G[2]}\nORDER BY ${m} DESC;`;
+  let ins='';
+  if(res.length>1){ const hi=res[0],lo=res[res.length-1];
+    if(m==='yield') ins=`<b>${lo.k}</b> has the lowest yield (${lo.v.toFixed(1)}%), ${(hi.v-lo.v).toFixed(1)} pts below <b>${hi.k}</b>.${g!=='batch'?' Drill into Batch explorer to see the drying excursions behind it.':''}`;
+    else if(m==='alarms'||m==='excmin') ins=hi.v>0?`<b>${hi.k}</b> accounts for the most ${m==='alarms'?'alarms':'excursion minutes'} (${hi.v.toFixed(0)}). That's a candidate root cause to raise with the supplier / for CPV trending.`:'No alarms in this selection.';
+    else ins=`<b>${hi.k}</b> is the longest (${hi.v.toFixed(2)} h), compared with ${lo.v.toFixed(2)} h for <b>${lo.k}</b>. Re-drying after excursions adds about 12 min per affected batch.`; }
+  $('resIns').innerHTML=ins?`<div class="insight">💡 ${ins}</div>`:'';
+}
+function ask(q){ $('askIn').value=q; const {m,g}=parseAsk(q);
+  if(!m&&!g){$('interp').innerHTML='<span style="color:var(--red)">Couldn\'t map that. Try "yield", "alarms", "cycle time" with "supplier", "lot", "day" or "batch".</span>';return;}
+  if(m)$('qm').value=m; if(g)$('qg').value=g; $('qf').value='all';
+  $('interp').innerHTML=`Interpreted as <b>${MET[$('qm').value][0]}</b> by <b>${GRP[$('qg').value][0]}</b>`; runQuery(); }
+
+let lastAnalyticsLen=-1;
+function render(){
+  renderTop();
+  if(view==='live') renderLive();
+  if(view==='pipeline') renderPipe();
+  if(view==='batches') renderBatches();
+  if(view==='analytics' && S.history.length!==lastAnalyticsLen){ lastAnalyticsLen=S.history.length; runQuery(); }
+}
+
+/* controls */
+$('playBtn').onclick=()=>{S.running=!S.running;render();};
+document.querySelectorAll('#speed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.s;document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on',x===b));});
+$('faultBtn').onclick=()=>{
+  if(S.fault||S.faultArmed){toast('A fault is already in progress or armed.','warn');return;}
+  S.faultArmed=true; const b=S.batch;
+  toast(b&&b.phases[b.pi].name==='Drying'?'Fault armed: dryer temperature will spike in the current drying phase.':'Fault armed: it will occur during the next drying phase (FBD-301).','warn');
+  if(view!=='live') location.hash='live'; render(); };
+$('resetBtn').onclick=()=>{init();lastAnalyticsLen=-1;lastHist=-1;mapKey='';document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on',x.dataset.s==='5'));render();toast('Demo reset.','ok');};
+$('askBtn').onclick=()=>ask($('askIn').value);
+$('askIn').addEventListener('keydown',e=>{if(e.key==='Enter')ask($('askIn').value);});
+['qm','qg','qf'].forEach(id=>$(id).onchange=()=>{$('interp').textContent='';runQuery();});
+$('presets').innerHTML=PRESETS.map(p=>`<button>${p}</button>`).join('');
+$('presets').querySelectorAll('button').forEach(b=>b.onclick=()=>ask(b.textContent));
+document.addEventListener('mousemove',e=>{
+  const svg=e.target.closest&&e.target.closest('svg.ch'); const tip=$('tip'); if(!svg){tip.style.display='none';return;} });
+
+/* loop */
+init(); show(location.hash.slice(1)||'live');
+setInterval(()=>{ if(S.running){ S.acc+=S.speed*15; while(S.acc>=60){stepMinute();S.acc-=60;} } render(); },250);
+</script>
+</body>
+</html>
