@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Manufacturing Data Harmonization — POC Demo</title>
+<title>Data Batch Release — POC Demo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -116,6 +116,43 @@ input[type=text],select{border:1px solid var(--line);border-radius:7px;padding:7
 .insight{background:#fff8e6;border:1px solid #f3dca5;border-radius:8px;padding:9px 11px;margin-top:10px}
 svg text{font-family:Inter,sans-serif}
 .tip{position:fixed;pointer-events:none;background:var(--navy);color:#fff;font-size:11px;padding:6px 8px;border-radius:6px;display:none;z-index:50}
+.mback{position:fixed;inset:0;background:#0f1b33b3;z-index:80;display:none;align-items:flex-start;justify-content:center;padding:28px 16px;overflow:auto}
+.mback.on{display:flex}
+.mpanel{background:#fff;color:var(--ink);border-radius:14px;max-width:1000px;width:100%;box-shadow:0 20px 60px #0008;overflow:hidden;animation:tin .25s ease}
+.mhead{background:var(--navy);color:#fff;padding:14px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mhead h3{margin:0;font-size:16px}.mhead .sub{font-size:11.5px;color:#9fb0cc}
+.mhead .acts{margin-left:auto;display:flex;gap:8px}
+.mbody{padding:16px 18px 20px}
+.pill{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:12px;text-transform:uppercase;letter-spacing:.5px}
+.pill.armed{background:#fff4e0;color:var(--amber)}.pill.live{background:#fdecec;color:var(--red)}.pill.ok{background:#e8f6ee;color:var(--green)}.pill.info{background:#e6f0ff;color:var(--blue)}
+.steps2{position:relative;margin:4px 0 0;padding:0;list-style:none}
+.steps2>li{position:relative;padding:0 0 16px 40px}
+.steps2>li:before{content:'';position:absolute;left:13px;top:28px;bottom:0;width:2px;background:#e3e8f0}
+.steps2>li:last-child:before{display:none}
+.steps2 .dot{position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:#eef2f8;color:var(--muted)}
+.steps2 li.done .dot{background:var(--green);color:#fff}
+.steps2 li.now .dot{background:var(--red);color:#fff;animation:pulse2 1.2s infinite}
+.steps2 li.fail .dot{background:var(--red);color:#fff}
+@keyframes pulse2{50%{box-shadow:0 0 0 6px #dc262622}}
+.steps2 li.wait{opacity:.5}
+.steps2 h4{margin:3px 0 4px;font-size:13.5px}
+.steps2 .t{font-size:11px;color:var(--muted);font-weight:500;margin-left:6px}
+.steps2 .box{background:#f7f9fc;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:6px;font-size:12px}
+.steps2 .raw{background:var(--navy);color:#cfe0ff;border-radius:8px;padding:8px 10px;margin-top:6px;white-space:pre-wrap;word-break:break-all}
+.maprow{display:grid;grid-template-columns:150px 1fr 24px 1fr;gap:6px;align-items:center;padding:3px 0;font-size:12px}
+.maprow .from{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:#7a4b00;background:#fff4e0;border-radius:5px;padding:2px 6px}
+.maprow .to{font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--green);background:#e8f6ee;border-radius:5px;padding:2px 6px}
+.kgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:6px}
+@media(max-width:800px){.kgrid{grid-template-columns:1fr 1fr}.maprow{grid-template-columns:1fr}}
+.kgrid div{background:#f7f9fc;border:1px solid var(--line);border-radius:7px;padding:6px 8px;font-size:11px;color:var(--muted)}
+.kgrid b{display:block;color:var(--ink);font-size:12.5px;font-family:'JetBrains Mono',monospace}
+.reveal>li{opacity:0;animation:stepin .4s ease forwards}
+@keyframes stepin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.kw{background:#fff1b8;border-radius:3px;padding:0 3px;font-weight:600}
+.bchip{display:inline-block;border:1px solid var(--line);border-radius:6px;padding:3px 8px;margin:3px 4px 0 0;font-size:11.5px;cursor:pointer;background:#fff;color:var(--ink)}
+.bchip:hover{border-color:var(--accent)}
+.evlink{color:var(--blue);cursor:pointer;font-weight:600;margin-left:4px;white-space:nowrap}
+.toast button{margin-left:8px;background:#fff;color:var(--navy);border:0;border-radius:6px;padding:3px 8px;font-weight:600;font-size:11.5px}
 #toasts{position:fixed;right:16px;bottom:16px;display:flex;flex-direction:column;gap:8px;z-index:60}
 .toast{background:var(--navy);color:#fff;border-radius:10px;padding:10px 14px;font-size:12.5px;box-shadow:0 8px 24px #0004;max-width:360px;border-left:4px solid var(--blue);animation:tin .3s ease}
 .toast.bad{border-left-color:var(--red)}.toast.ok{border-left-color:#22c55e}.toast.warn{border-left-color:#f59e0b}
@@ -124,7 +161,7 @@ svg text{font-family:Inter,sans-serif}
 </head>
 <body>
 <div class="top" id="top">
-  <div><div class="t1">Manufacturing Data Hub · POC</div><div class="t2">Line L2 · Site BOS-1 · simulated plant, illustrative data</div></div>
+  <div><div class="t1">Data Batch Release · POC</div><div class="t2">Line L2 · Site BOS-1 · simulated plant, illustrative data</div></div>
   <div class="ctrl">
     <div class="clock"><b id="clkL">--:--</b> <span id="clkU">UTC</span></div>
     <span style="font-size:12px;color:#cbd6ea"><span class="livedot"></span><span id="liveTxt">LIVE</span></span>
@@ -157,12 +194,12 @@ svg text{font-family:Inter,sans-serif}
   <!-- PIPELINE -->
   <section id="v-pipeline">
     <h2>Data pipeline · live</h2>
-    <p class="lead">Raw messages arrive in each system's own format, and the engine resolves, contextualizes, validates and publishes them as canonical events.</p>
+    <p class="lead">Raw messages arrive in each system's own format, and the Factory Integration Layer resolves, contextualizes, validates and publishes them as canonical events.</p>
     <div class="grid g6" id="pk"></div>
     <div class="flowcol" style="margin-top:12px">
       <div class="card"><div class="k">Raw in · native source formats</div><div class="feed" id="rawFeed" style="max-height:420px"></div></div>
       <div class="engine" id="engine">
-        <div class="k" style="color:#9fb0cc">Harmonization engine</div>
+        <div class="k" style="color:#9fb0cc">Factory Integration Layer</div>
         <div class="st" id="st1">1 · Resolve<span>IDs → canonical batch</span></div>
         <div class="st" id="st2">2 · Contextualize<span>ISA-95 + batch window</span></div>
         <div class="st" id="st3">3 · Validate<span>units, UTC, DQ rules</span></div>
@@ -209,6 +246,7 @@ svg text{font-family:Inter,sans-serif}
   </main>
 </div>
 <div class="tip" id="tip"></div>
+<div class="mback" id="mback"><div class="mpanel" id="mpanel"></div></div>
 <div id="toasts"></div>
 
 <script>
@@ -241,6 +279,7 @@ const nz=a=>(rnd()-0.5)*2*a;
 const pad=n=>String(n).padStart(2,'0');
 const MON=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 const est=ms=>new Date(ms-5*3600e3);
+const hms=ms=>{const d=est(ms);return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes())+':'+pad(d.getUTCSeconds());};
 const hm=ms=>{const d=est(ms);return pad(d.getUTCHours())+':'+pad(d.getUTCMinutes());};
 const iso=ms=>new Date(ms).toISOString().replace('.000','');
 const mesTime=ms=>{const d=est(ms);return `${pad(d.getUTCMonth()+1)}/${pad(d.getUTCDate())}/${d.getUTCFullYear()} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())} EST`;};
@@ -257,7 +296,7 @@ function init(){
      raw:[],harm:[],events:[],quar:[],registry:[],
      c:{raw:0,harm:0,quar:0,lat:420},tagMap:JSON.parse(JSON.stringify(BASE_TAGMAP)),
      units:{},spark:{'GR-201':[],'FBD-301':[],'TP-401':[]},
-     alarm:null,fault:null,faultArmed:false,seeding:true,newTag:false,newTagAnnounced:false,manualFaults:0};
+     alarm:null,fault:null,faultArmed:false,inc:null,incidents:[],seeding:true,newTag:false,newTagAnnounced:false,manualFaults:0};
   for(const u in UNITS) S.units[u]={status:'Idle',vals:{}};
   // fast-forward history
   while(S.history.length<10) stepMinute();
@@ -312,6 +351,7 @@ function completeBatch(){
   emit('EBS',{LOT_NUMBER:b.lot,TXN_TYPE:'WIP COMPLETION',QTY:(118.4*b.yld/98).toFixed(1),UOM:'KG',TXN_DATE:ebsTime(S.t)});
   emit('MES',{eBR:{BatchID:b.mes,Event:'BATCH_COMPLETE',Yield:b.yld,LocalTime:mesTime(S.t)}});
   S.history.unshift(b); S.batch=null; S.idleLeft=CHANGE;
+  if(!S.seeding) (S.incidents||[]).forEach(inc=>{ if(inc.batch===b && inc.stage!=='closed'){ inc.stage='closed'; inc.doneAt=S.t; } });
   event(b.alarms.length?'⚠':'✓',`${b.id} completed · yield ${b.yld}%${b.alarms.length?' · '+b.alarms.length+' alarm(s), sent for review':''}`);
   toast(`${b.id} completed: yield ${b.yld}%. Added to Batch explorer and KPIs.`, b.alarms.length?'warn':'ok');
 }
@@ -326,6 +366,8 @@ function stepMinute(){
     if(p.name==='Drying' && !S.fault){
       if((S.faultArmed||bb.spont) && bb.pm>=Math.round(p.dur*0.3)){
         S.fault={len:9,left:9,manual:S.faultArmed}; if(S.faultArmed) S.manualFaults++;
+        if(!S.seeding){ let inc=(S.inc&&S.inc.stage==='armed')?S.inc:newIncident(false);
+          inc.batch=bb; inc.ws=bb.ws[bb.pi]; inc.ef=bb.ef[bb.pi]; inc.riseAt=S.t; inc.stage='rising'; }
         S.faultArmed=false; bb.spont=false; bb.hadFault=true; p.dur+=12;
         if(!S.seeding) event('⚡','Dryer outlet temperature rising on FBD-301');
       }
@@ -363,14 +405,18 @@ function stepMinute(){
     const p=bb.phases[bb.pi];
     bb.series.push({m:bb.m++,v:prodT,ph:p.name});
     if(p.name==='Drying'){
+      const inc=S.inc; if(inc&&inc.batch===bb&&(inc.stage==='rising'||inc.stage==='alarm')){ inc.last={c:prodT,t:S.t}; inc.trace.push(prodT); }
       if(prodT>LIMIT && !S.alarm){ S.alarm={batch:bb.id,start:S.t,peak:prodT};
         emit('IGN',{topic:'spBv1.0/BOS1/NDATA/L2/ALARMS',timestamp:S.t,alarm:{source:'FBD301.OUTLET_T',state:'ACTIVE',priority:'HIGH',value:+F(prodT).toFixed(1),units:'degF'}});
-        event('🔴',`ALARM FBD301.OUTLET_T HI · ${prodT.toFixed(1)} °C · ${bb.id}`,'bad');
-        toast(`Alarm on FBD-301: product temp ${prodT.toFixed(1)} °C &gt; ${LIMIT} °C. Linked to ${bb.id}, ${bb.ws[bb.pi]}.`,'bad'); }
-      else if(S.alarm){ if(prodT>LIMIT) S.alarm.peak=Math.max(S.alarm.peak,prodT);
+        let ic=S.inc; if(!S.seeding&&!(ic&&ic.batch===bb&&ic.stage==='rising')){ ic=newIncident(false); ic.batch=bb; ic.ws=bb.ws[bb.pi]; ic.ef=bb.ef[bb.pi]; ic.riseAt=S.t; ic.last={c:prodT,t:S.t}; ic.trace=[prodT]; }
+        if(!S.seeding){ ic.stage='alarm'; ic.alarmAt=S.t; ic.alarmC=prodT; ic.peak=prodT; }
+        event('🔴',`ALARM FBD301.OUTLET_T HI · ${prodT.toFixed(1)} °C · ${bb.id}`,'bad',S.seeding?null:ic.id);
+        if(!S.seeding && !(modal&&modal.type==='inc'&&modal.id===ic.id)) toast(`Alarm on FBD-301: ${prodT.toFixed(1)} °C &gt; ${LIMIT} °C, linked to ${bb.id}. <button onclick="openIncident(${ic.id})">View details</button>`,'bad'); }
+      else if(S.alarm){ if(prodT>LIMIT){ S.alarm.peak=Math.max(S.alarm.peak,prodT); if(S.inc&&S.inc.batch===bb) S.inc.peak=S.alarm.peak; }
         else { const a=S.alarm; a.end=S.t; a.dur=Math.round((a.end-a.start)/60000); bb.alarms.push(a); S.alarm=null;
           emit('IGN',{topic:'spBv1.0/BOS1/NDATA/L2/ALARMS',timestamp:S.t,alarm:{source:'FBD301.OUTLET_T',state:'CLEARED'}});
-          event('🟢',`Alarm cleared · ${a.dur} min · peak ${a.peak.toFixed(1)} °C`); } }
+          if(!S.seeding&&S.inc&&S.inc.batch===bb&&S.inc.stage==='alarm'){ Object.assign(S.inc,{stage:'cleared',clearAt:S.t,dur:a.dur,peak:a.peak}); }
+          event('🟢',`Alarm cleared · ${a.dur} min · peak ${a.peak.toFixed(1)} °C`,'',S.seeding?null:(S.inc&&S.inc.id)); } }
     }
     bb.pm++;
     if(bb.pm>=p.dur){ endPhase(); bb.pi++; bb.pm=0; if(bb.pi>=3) completeBatch(); else startPhase(); }
@@ -435,7 +481,7 @@ function mapTag(tag,unit,param,uom){
   event('✓',`Tag ${tag} mapped; ${items.length} msgs replayed`);
   mapKey=''; render();
 }
-function event(ic,txt,cls){ if(S.seeding&&S.events.length>30)return; S.events.unshift({t:S.t,ic,txt,cls}); if(S.events.length>60)S.events.pop(); }
+function event(ic,txt,cls,inc){ if(S.seeding&&S.events.length>30)return; S.events.unshift({t:S.t,ic,txt,cls,inc}); if(S.events.length>60)S.events.pop(); }
 
 /* ============ UI ============ */
 let view='live', selBatch=null, mapKey='', lastHist=-1;
@@ -469,7 +515,7 @@ function chart(series,total,opts={}){
 }
 
 function renderTop(){
-  $('clkL').textContent=hm(S.t)+' EST'; $('clkU').textContent=iso(S.t).slice(0,16).replace('T',' ')+' UTC';
+  const nowMs=S.t+Math.floor(S.acc)*1000; $('clkL').textContent=hms(nowMs)+' EST'; $('clkU').textContent=iso(nowMs).slice(0,19).replace('T',' ')+' UTC';
   $('top').classList.toggle('paused',!S.running); $('liveTxt').textContent=S.running?'LIVE':'PAUSED';
   $('playBtn').textContent=S.running?'⏸ Pause':'▶ Play';
   $('faultBtn').textContent=S.faultArmed?'⚡ Fault armed…':'⚡ Inject dryer fault';
@@ -500,7 +546,7 @@ function renderLive(){
       <div class="ctx">Batch context: ${ctx}</div></div>`;}).join('');
   $('chartLbl').textContent=b?`${b.id} · minute ${b.m} of ~${tot}`:'Waiting for next batch…';
   $('liveChart').innerHTML=b?chart(b.series,tot,{live:true}):chart(S.history[0].series,S.history[0].series.length,{});
-  $('events').innerHTML=S.events.slice(0,30).map(e=>`<div class="ev"><span class="tm">${hm(e.t)}</span><span>${e.ic}</span><span style="${e.cls==='bad'?'color:var(--red);font-weight:600':''}">${e.txt}</span></div>`).join('');
+  $('events').innerHTML=S.events.slice(0,30).map(e=>`<div class="ev"><span class="tm">${hm(e.t)}</span><span>${e.ic}</span><span style="${e.cls==='bad'?'color:var(--red);font-weight:600':''}">${e.txt}${e.inc?` <span class="evlink" onclick="openIncident(${e.inc})">Details ›</span>`:''}</span></div>`).join('');
 }
 
 function rawLine(m){ const j=JSON.stringify(m.raw); return `<div class="msg ${m.q>seenRaw?'new':''}"><span class="src s-${m.src}">${{EBS:'ORACLE EBS',MES:'POMS MES',PI:'PI',IGN:'IGNITION'}[m.src]}</span> <span class="note">${hm(m.t)}</span><div class="mono">${esc(j.length>230?j.slice(0,230)+'…':j)}</div></div>`; }
@@ -605,17 +651,125 @@ function runQuery(){
   $('resIns').innerHTML=ins?`<div class="insight">💡 ${ins}</div>`:'';
 }
 function ask(q){ $('askIn').value=q; const {m,g}=parseAsk(q);
-  if(!m&&!g){$('interp').innerHTML='<span style="color:var(--red)">Couldn\'t map that. Try "yield", "alarms", "cycle time" with "supplier", "lot", "day" or "batch".</span>';return;}
+  if(!m&&!g){$('interp').innerHTML='<span style="color:var(--red)">Couldn\'t map that. Try "yield", "alarms", "cycle time" with "supplier", "lot", "day" or "batch".</span>'; openAsk(q,null); return;}
   if(m)$('qm').value=m; if(g)$('qg').value=g; $('qf').value='all';
-  $('interp').innerHTML=`Interpreted as <b>${MET[$('qm').value][0]}</b> by <b>${GRP[$('qg').value][0]}</b>`; runQuery(); }
+  $('interp').innerHTML=`Interpreted as <b>${MET[$('qm').value][0]}</b> by <b>${GRP[$('qg').value][0]}</b>`; runQuery(); openAsk(q,{m,g}); }
 
 let lastAnalyticsLen=-1;
 function render(){
-  renderTop();
+  renderTop(); if(modal&&modal.type==='inc') renderIncident();
   if(view==='live') renderLive();
   if(view==='pipeline') renderPipe();
   if(view==='batches') renderBatches();
   if(view==='analytics' && S.history.length!==lastAnalyticsLen){ lastAnalyticsLen=S.history.length; runQuery(); }
+}
+
+/* ============ detail screens (modal) ============ */
+let modal=null, lastModalHtml='', incSeq=0;
+function newIncident(manual){ const inc={id:++incSeq,manual,armedAt:S.t,stage:'armed',batch:null,trace:[],peak:null}; S.inc=inc; S.incidents.push(inc); return inc; }
+function closeModal(){ modal=null; lastModalHtml=''; $('mback').classList.remove('on'); }
+$('mback').addEventListener('click',e=>{ if(e.target.id==='mback') closeModal(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'&&modal) closeModal(); });
+function openIncident(id){ modal={type:'inc',id}; lastModalHtml=''; $('mback').classList.add('on'); renderIncident(); }
+function gotoBatch(id){ const b=allBatches().find(x=>x.id===id); if(b){ selBatch=b; lastHist=-1; $('bdet').dataset.id=''; } closeModal(); location.hash='batches'; }
+function miniTrace(arr){ if(arr.length<2) return ''; const W=420,H=70,lo=38,hi=50, x=i=>i/(arr.length-1)*W, y=v=>H-4-(Math.min(hi,Math.max(lo,v))-lo)/(hi-lo)*(H-8);
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="70" style="margin-top:6px;background:#fff;border:1px solid #e3e8f0;border-radius:6px"><line x1="0" x2="${W}" y1="${y(LIMIT)}" y2="${y(LIMIT)}" stroke="#dc2626" stroke-dasharray="4 3"/><text x="${W-4}" y="${y(LIMIT)-3}" font-size="9" text-anchor="end" fill="#dc2626">limit ${LIMIT} °C</text><polyline fill="none" stroke="#0f1b33" stroke-width="1.6" points="${arr.map((v,i)=>x(i).toFixed(1)+','+y(v).toFixed(1)).join(' ')}"/>${arr.map((v,i)=>v>LIMIT?`<circle cx="${x(i)}" cy="${y(v)}" r="2.6" fill="#dc2626"/>`:'').join('')}</svg>`; }
+
+function renderIncident(){
+  const inc=S.incidents.find(i=>i.id===modal.id); if(!inc){closeModal();return;}
+  const ord={armed:0,rising:1,alarm:2,cleared:3,closed:4}, k=ord[inc.stage], b=inc.batch;
+  const cur=S.batch, curPh=cur?cur.phases[cur.pi].name:null;
+  const st=(doneIf,nowIf)=>doneIf?'done':nowIf?'now':'wait';
+  const pill={armed:['armed','Waiting for drying'],rising:['live','Temperature rising'],alarm:['live','Alarm active'],cleared:['ok','Alarm cleared'],closed:['ok','Closed · batch complete']}[inc.stage];
+  const lastC=inc.alarmAt?inc.alarmC:(inc.last?inc.last.c:null), lastT=inc.alarmAt?inc.alarmAt:(inc.last?inc.last.t:inc.armedAt);
+  const steps=[];
+  steps.push({c:'done',h:inc.manual?'Fault injected':'Unplanned excursion detected',t:hms(inc.armedAt),
+    body:inc.manual?'A simulated heater drift was injected on <b>FBD-301 (fluid-bed dryer)</b>. Nothing else was changed: everything below is the platform reacting on its own.':'No manual trigger. The dryer drifted on its own during this batch.'});
+  steps.push({c:st(k>=1,k===0),h:'Linked to the running batch',t:b?hms(inc.riseAt):'',
+    body:b?`<b>${b.id}</b> is in the <b>Drying</b> step on FBD-301. MES worksheet <span class="mono">${inc.ws}</span>, PI event frame <span class="mono">${inc.ef}</span>.`
+          :`Waiting for the next drying step on FBD-301. ${cur?`Right now ${cur.id} is in <b>${curPh}</b>.`:'The line is in changeover.'}`});
+  const rawF=lastC!=null?F(lastC).toFixed(1):'—';
+  steps.push({c:st(k>=2,k===1),h:inc.alarmAt?'SCADA reports the reading that broke the limit':'SCADA reports the temperature rising',t:inc.last?hms(lastT):'',
+    body:k>=1?`Ignition publishes the raw tag value. It has no batch ID and is in °F:
+      <div class="raw mono">{"topic":"spBv1.0/BOS1/DDATA/L2/FBD301","timestamp":${lastT},
+ "metrics":[{"name":"FBD301.OUTLET_T","value":${rawF},"units":"degF"}]}</div>${miniTrace(inc.trace)}`:'Not started yet.'});
+  steps.push({c:st(k>=2,k===1),h:'Factory Integration Layer contextualizes the reading',t:'',
+    body:k>=1?`<div class="box">
+      <div class="maprow"><span>Tag → equipment</span><span class="from">FBD301.OUTLET_T</span><span>→</span><span class="to">BOS1/OSD/L2/FBD-301 · product_temp</span></div>
+      <div class="maprow"><span>Unit</span><span class="from">${rawF} °F</span><span>→</span><span class="to">${lastC!=null?lastC.toFixed(1):'—'} °C</span></div>
+      <div class="maprow"><span>Time</span><span class="from">${lastT} (epoch)</span><span>→</span><span class="to">${iso(lastT)}</span></div>
+      <div class="maprow"><span>Batch context</span><span class="from">no batch in SCADA</span><span>→</span><span class="to">${b?b.id+' · '+inc.ws:'—'}</span></div>
+      <div class="note" style="margin-top:4px">Batch found by time window: the MES worksheet active on FBD-301 at that moment.</div></div>`:'Not started yet.'});
+  steps.push({c:st(k>=2,k===1),h:'Validated rule checks every reading',t:inc.alarmAt?hms(inc.alarmAt):'',
+    body:k>=2?`<div class="box">Rule <b>DRY-T-01</b>: product_temp ≤ ${LIMIT.toFixed(1)} °C during Drying → <b style="color:var(--red)">FAILED at ${inc.alarmC.toFixed(1)} °C</b>. Alarm raised automatically.</div>
+      <div class="raw mono">{"topic":"spBv1.0/BOS1/NDATA/L2/ALARMS","alarm":{"source":"FBD301.OUTLET_T","state":"ACTIVE","priority":"HIGH","value":${F(inc.alarmC).toFixed(1)},"units":"degF"}}</div>`
+      :k===1?`Checking each minute. Latest reading <b>${lastC!=null?lastC.toFixed(1):'—'} °C</b> against the ${LIMIT} °C limit…`:'Not started yet.'});
+  steps.push({c:st(k>=2,false),h:'Exception attached to the batch record',t:'',
+    body:k>=2&&b?`<div class="kgrid">
+      <div>Canonical batch<b>${b.id}</b></div><div>Oracle EBS lot<b>${b.lot}</b></div><div>POMS MES batch<b>${b.mes}</b></div><div>MES worksheet<b>${inc.ws}</b></div>
+      <div>PI event frame<b>${inc.ef}</b></div><div>API lot · supplier<b>${b.api} · ${b.sup}</b></div><div>Excipient lots<b>${b.mcc}, ${b.mg}</b></div><div>Status<b style="color:var(--red)">Under review</b></div></div>
+      <div class="note" style="margin-top:6px">QA gets one exception with its evidence, instead of reviewing the full record.</div>`:'Will be created when the rule fails.'});
+  steps.push({c:st(k>=3,k===2),h:'Recovery',t:inc.clearAt?hms(inc.clearAt):'',
+    body:k>=3?`Alarm cleared after <b>${inc.dur} min</b> above the limit, peak <b>${inc.peak.toFixed(1)} °C</b>. Drying extended by 12 min to re-dry the material.`
+      :k===2?`Excursion in progress: <b>${Math.round((S.t-inc.alarmAt)/60000)} min</b> above the limit so far, peak <b>${(inc.peak||inc.alarmC).toFixed(1)} °C</b>.`:'Pending.'});
+  const clean=S.history.filter(h=>!h.alarms.length), avgClean=clean.length?(clean.reduce((a,h)=>a+h.yld,0)/clean.length).toFixed(1):'—';
+  steps.push({c:st(k>=4,k===3),h:'Batch outcome',t:inc.doneAt?hms(inc.doneAt):'',
+    body:k>=4?`${b.id} completed with yield <b style="color:var(--red)">${b.yld}%</b> against <b>${avgClean}%</b> for batches without alarms. It is marked <b>Under review</b> and appears in Batch explorer and Ask the data.`
+      :b?`${b.id} is still running (${b.phases[Math.min(b.pi,2)].name}).`:'Pending.'});
+  const html=`<div class="mhead"><div><h3>Incident · Dryer temperature excursion</h3><div class="sub">FBD-301 · Line L2 · ${b?b.id:'batch not yet assigned'}</div></div>
+     <span class="pill ${pill[0]}">${pill[1]}</span>
+     <div class="acts"><button class="tb" onclick="S.running=!S.running;lastModalHtml='';render()">${S.running?'⏸ Pause':'▶ Play'}</button>${b?`<button class="tb" onclick="gotoBatch('${b.id}')">Open batch</button>`:''}<button class="tb red" onclick="closeModal()">Close ✕</button></div></div>
+   <div class="mbody"><div class="note" style="margin-bottom:10px">This screen updates live as the simulation runs. Every step is done by the platform with no manual lookup.</div>
+   <ol class="steps2">${steps.map((s,i)=>`<li class="${s.c}"><span class="dot">${s.c==='done'?'✓':i+1}</span><h4>${s.h}<span class="t">${s.t}</span></h4><div>${s.body}</div></li>`).join('')}</ol></div>`;
+  if(html!==lastModalHtml){ const sc=$('mback').scrollTop; $('mpanel').innerHTML=html; lastModalHtml=html; $('mback').scrollTop=sc; }
+}
+
+const LINEAGE={yield:['yield_pct','POMS MES','eBR BATCH_COMPLETE event, MES batch ID resolved to canonical batch'],
+  cycle:['cycle_time_h','POMS MES','worksheet start/end times, EST converted to UTC'],
+  dry:['drying_time_h','PI Historian','drying event frames (EF_DRYI_*) on FBD-301'],
+  alarms:['alarm_count','Ignition SCADA','HI alarms on FBD301.OUTLET_T, linked to batch by time window'],
+  excmin:['excursion_min','Ignition SCADA','minutes above 45 °C, °F converted to °C, linked by time window'],
+  api:['api_lot','Oracle EBS','WIP ISSUE component lot for the API'],
+  supplier:['supplier','Oracle EBS','supplier (CDMO) of the API lot'],
+  batch:['batch_id','Master entity registry','one ID for EBS lot, MES batch, worksheets, event frames'],
+  day:['batch_date','POMS MES','batch start date, local time converted to UTC']};
+const KW={yield:/yield/i,dry:/dry\w*/i,cycle:/cycle|time|duration|long/i,alarms:/alarm\w*|excursion\w*|deviation\w*|fault\w*/i,excmin:/minute\w*/i,
+  supplier:/supplier\w*|cdmo|vendor\w*/i,api:/\blot\b|\bapi\b|material\w*/i,day:/\bday\b|date|daily/i,batch:/batch\w*/i};
+function hl(q,keys){ let out=esc(q); keys.forEach(k=>{ const r=KW[k]; if(r) out=out.replace(new RegExp(r.source,'i'),m=>`<span class="kw">${m}</span>`); }); return out; }
+function openAsk(q,parsed){
+  modal={type:'ask'}; lastModalHtml=''; $('mback').classList.add('on');
+  let steps=[];
+  if(!parsed){
+    steps=[{c:'done',h:'Question received',body:`“${esc(q||'(empty)')}”`},
+      {c:'fail',h:'Could not map the question to a KPI',body:`No known metric or grouping found. This version matches keywords on purpose so every answer is deterministic (a natural-language assistant is Phase 2).
+       <div class="box">Try a metric: <b>yield</b>, <b>alarms</b>, <b>cycle time</b>, <b>drying time</b>, plus a grouping: <b>supplier</b>, <b>API lot</b>, <b>day</b>, <b>batch</b>.</div>
+       <div style="margin-top:6px">${PRESETS.map(p=>`<span class="bchip" onclick="ask(this.textContent)">${p}</span>`).join('')}</div>`}];
+  } else {
+    const m=$('qm').value,g=$('qg').value,M=MET[m],G=GRP[g];
+    const rows=S.history, n=rows.length, first=rows[rows.length-1], last=rows[0];
+    const keys=[parsed.m,parsed.g].filter(Boolean);
+    // batches behind the headline group
+    const grp={}; rows.forEach(b=>{const kk=G[1](b);(grp[kk]=grp[kk]||[]).push(b);});
+    const res=Object.entries(grp).map(([kk,bs])=>{const vals=bs.map(M[1]);const s=vals.reduce((a,c)=>a+c,0);return {k:kk,v:M[2]==='avg'?s/vals.length:s,bs};}).sort((a,b)=>b.v-a.v);
+    const focus=m==='yield'?res[res.length-1]:res[0];
+    const lin=[LINEAGE.batch,LINEAGE[m],LINEAGE[g]].filter((x,i,a)=>a.indexOf(x)===i);
+    steps=[
+      {c:'done',h:'Question received',body:`“${hl(q,keys)}”`},
+      {c:'done',h:'Understood as a KPI query',body:`<div class="box"><div class="maprow"><span>Metric</span><span class="from">${parsed.m?esc((q.match(KW[parsed.m])||[''])[0]):'(default)'}</span><span>→</span><span class="to">${M[0]}</span></div>
+        <div class="maprow"><span>Group by</span><span class="from">${parsed.g?esc((q.match(KW[parsed.g])||[''])[0]):'(default)'}</span><span>→</span><span class="to">${G[0]}</span></div>
+        <div class="maprow"><span>Filter</span><span class="from">none</span><span>→</span><span class="to">all completed batches, Line L2</span></div></div>
+        <div class="note" style="margin-top:4px">Keyword mapping to a governed KPI definition. No AI calculates the numbers.</div>`},
+      {c:'done',h:'Data used',body:`<b>${n} completed batches</b> on Line L2, from ${dayStr(first.start)} to ${dayStr(last.end)}, read from the harmonized table <span class="mono">harmonized.batch_kpis</span>.
+        <table style="margin-top:6px"><tr><th>Column</th><th>Source system</th><th>How it got there</th></tr>${lin.map(l=>`<tr><td class="mono">${l[0]}</td><td><b>${l[1]}</b></td><td>${l[2]}</td></tr>`).join('')}</table>`},
+      {c:'done',h:'Query executed',body:`<div class="raw mono">${esc($('resSql').textContent)}</div><div class="note" style="margin-top:4px">Returned ${res.length} rows in 0.4 s (simulated).</div>`},
+      {c:'done',h:'Result',body:`<div class="grid g2" style="margin-top:4px"><div>${$('resChart').innerHTML}</div><div>${$('resTab').innerHTML}</div></div>`},
+      {c:'done',h:'What it means',body:`${$('resIns').innerHTML||'<div class="note">No notable difference in this selection.</div>'}
+        ${focus?`<div style="margin-top:8px" class="note">Batches behind <b>${esc(focus.k)}</b> (click to open):</div><div>${focus.bs.map(b=>`<span class="bchip" onclick="gotoBatch('${b.id}')">${b.id} · ${b.yld}%${b.alarms.length?' · '+b.alarms.length+' alarm':''}</span>`).join('')}</div>`:''}`}];
+  }
+  $('mpanel').innerHTML=`<div class="mhead"><div><h3>Ask the data · how this answer was produced</h3><div class="sub">Deterministic query on the harmonized batch model</div></div>
+     <span class="pill ${parsed?'ok':'live'}">${parsed?'Answered':'Not understood'}</span><div class="acts"><button class="tb red" onclick="closeModal()">Close ✕</button></div></div>
+   <div class="mbody"><ol class="steps2 reveal">${steps.map((s,i)=>`<li class="${s.c}" style="animation-delay:${i*0.35}s"><span class="dot">${s.c==='done'?'✓':s.c==='fail'?'!':i+1}</span><h4>${s.h}</h4><div>${s.body}</div></li>`).join('')}</ol></div>`;
+  $('mback').scrollTop=0;
 }
 
 /* controls */
@@ -623,10 +777,9 @@ $('playBtn').onclick=()=>{S.running=!S.running;render();};
 document.querySelectorAll('#speed button').forEach(b=>b.onclick=()=>{S.speed=+b.dataset.s;document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on',x===b));});
 $('faultBtn').onclick=()=>{
   if(S.fault||S.faultArmed){toast('A fault is already in progress or armed.','warn');return;}
-  S.faultArmed=true; const b=S.batch;
-  toast(b&&b.phases[b.pi].name==='Drying'?'Fault armed: dryer temperature will spike in the current drying phase.':'Fault armed: it will occur during the next drying phase (FBD-301).','warn');
-  if(view!=='live') location.hash='live'; render(); };
-$('resetBtn').onclick=()=>{init();lastAnalyticsLen=-1;lastHist=-1;mapKey='';document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on',x.dataset.s==='5'));render();toast('Demo reset.','ok');};
+  S.faultArmed=true; const inc=newIncident(true); inc.stage='armed';
+  if(view!=='live') location.hash='live'; openIncident(inc.id); render(); };
+$('resetBtn').onclick=()=>{closeModal();init();lastAnalyticsLen=-1;lastHist=-1;mapKey='';document.querySelectorAll('#speed button').forEach(x=>x.classList.toggle('on',x.dataset.s==='5'));render();toast('Demo reset.','ok');};
 $('askBtn').onclick=()=>ask($('askIn').value);
 $('askIn').addEventListener('keydown',e=>{if(e.key==='Enter')ask($('askIn').value);});
 ['qm','qg','qf'].forEach(id=>$(id).onchange=()=>{$('interp').textContent='';runQuery();});
